@@ -1,29 +1,43 @@
 #####
 ## Repurposed version of Deep_seq_wrapper.jl originally written by Peter Campbell
 using Phylo
-print("Phylo loaded\n")
 using RCall
-print("RCall loaded\n")
 using DataFrames
-print("DataFrames loaded\n")
 using Distributions
-print("Distributions loaded\n")
 using Random
-print("Random loaded\n")
+
+Random.seed!(42)
 
 
-Random.seed!(28)
-base_dir = "/users/tld529/MySoftware/External/external_mouse_phylo/targeted/GibbsSampler" #UPDATE TO LOCAL DIRECTORY
-include("$base_dir/src/Deep_seq_tree_GS.jl")
+git_dir = "/users/tld529/MySoftware/External/external_mouse_phylo/targeted/GibbsSampler"
+out_dir = "results"
+
+# Define the samples to work on and basic variables for the Gibbs sampler
+iter = 20000
+burn_in = 10000
+thin = 100
+
+
+out_dir_final = "$out_dir/iter_$(iter)_burnin_$(burn_in)_thin_$(thin)"
+mkpath(out_dir_final)
+
+print("Running Gibbs Sampler with Iter: $iter, Burn-in: $burn_in, Thin: $thin\n")
+
+include("$git_dir/src/Deep_seq_tree_GS.jl")
 LABEL=ARGS[1]
-#LABEL="test"
+
+print("Processing sample: $LABEL\n")
 ####################################################
 # Get R data and trees into Julia
-@rput LABEL
+
+data_path = "$git_dir/data/$(LABEL)_gibbs_info.RDS"
+print("Reading data from: $data_path\n")
+
+@rput data_path
 
 R"""
     library(ape)
-    treeinfo=readRDS(sprintf("/users/tld529/MySoftware/External/external_mouse_phylo/targeted/GibbsSampler/data/%s_gibbs_info.RDS",LABEL))
+    treeinfo=readRDS(data_path)
     tree=treeinfo[["tree"]]
     details=treeinfo[["details"]]
     details$mut_ref=with(details,sprintf("%s-%s-%s-%s",Chrom,Pos,Ref,Alt))
@@ -35,10 +49,6 @@ R"""
 @rget details;
 
 ####################################################
-# Define the samples to work on and basic variables for the Gibbs sampler
-iter = 1000
-burn_in = 100
-thin = 10
 
 # Define a mapping for the nodes assigned in the mutation info DataFrame to the branch names of tree
 BranchT = typeof(getinbound(tree, getleaves(tree)[1]))
@@ -72,6 +82,7 @@ for i in eachrow(details)
     push!(muts[node_to_branch[i.node]],
                 Mutation(i.mut_ref, obsV, obsR, obsV+obsR, seqerr, Array{Float64, 1}()))
 end
-# 20000, 10000, 100
-GS_out = deep_seq_GS(tree, start_VAF, end_VAF, muts, 20000, 10000, 100; scale_pm = 50)
-write_GS_output(tree, GS_out, "$base_dir/output/", LABEL, node_to_branch)
+
+GS_out = deep_seq_GS(tree, start_VAF, end_VAF, muts, iter, burn_in, thin; scale_pm = 50)
+write_GS_output(tree, GS_out, out_dir_final, LABEL, node_to_branch)
+
