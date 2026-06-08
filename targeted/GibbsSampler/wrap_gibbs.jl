@@ -1,13 +1,19 @@
 #####
 ## Repurposed version of Deep_seq_wrapper.jl originally written by Peter Campbell
 using Phylo
+print("Phylo loaded\n")
 using RCall
+print("RCall loaded\n")
 using DataFrames
+print("DataFrames loaded\n")
 using Distributions
+print("Distributions loaded\n")
 using Random
+print("Random loaded\n")
+
 
 Random.seed!(28)
-base_dir = "/Users/ms56/R_work/mouse_phylo/targeted/GibbsSampler" #UPDATE TO LOCAL DIRECTORY
+base_dir = "/users/tld529/MySoftware/External/external_mouse_phylo/targeted/GibbsSampler" #UPDATE TO LOCAL DIRECTORY
 include("$base_dir/src/Deep_seq_tree_GS.jl")
 LABEL=ARGS[1]
 #LABEL="test"
@@ -17,7 +23,7 @@ LABEL=ARGS[1]
 
 R"""
     library(ape)
-    treeinfo=readRDS(sprintf("/Users/ms56/R_work/mouse_phylo/targeted/GibbsSampler/data/%s_gibbs_info.RDS",LABEL))
+    treeinfo=readRDS(sprintf("/users/tld529/MySoftware/External/external_mouse_phylo/targeted/GibbsSampler/data/%s_gibbs_info.RDS",LABEL))
     tree=treeinfo[["tree"]]
     details=treeinfo[["details"]]
     details$mut_ref=with(details,sprintf("%s-%s-%s-%s",Chrom,Pos,Ref,Alt))
@@ -35,7 +41,8 @@ burn_in = 100
 thin = 10
 
 # Define a mapping for the nodes assigned in the mutation info DataFrame to the branch names of tree
-node_to_branch = Dict{Int64, LinkBranch}()
+BranchT = typeof(getinbound(tree, getleaves(tree)[1]))
+node_to_branch = Dict{Int64, BranchT}()
 for i in 1:nleaves(tree)
     node_to_branch[i] = getinbound(tree, getleaves(tree)[i])
 end
@@ -43,9 +50,9 @@ for i in (nleaves(tree)+2):nnodes(tree) # Skipping root, which in R is always nl
     node_to_branch[i] = getinbound(tree, "Node $i")
 end
 # Initialise the mutation fields and branch start and end VAFs for Gibbs sampler
-start_VAF = Dict{LinkBranch, Array{Float64, 1}}()
-end_VAF = Dict{LinkBranch, Array{Float64, 1}}()
-muts = Dict{LinkBranch, Array{Mutation, 1}}()
+start_VAF = Dict{BranchT, Array{Float64, 1}}()
+end_VAF = Dict{BranchT, Array{Float64, 1}}()
+muts = Dict{BranchT, Array{Mutation, 1}}()
 for i in branchiter(tree)
     start_VAF[i] = isroot(tree, src(tree, i)) ? [0.5;] : [0.0;]
     end_VAF[i] = [0.0;]
@@ -68,4 +75,3 @@ end
 # 20000, 10000, 100
 GS_out = deep_seq_GS(tree, start_VAF, end_VAF, muts, 20000, 10000, 100; scale_pm = 50)
 write_GS_output(tree, GS_out, "$base_dir/output/", LABEL, node_to_branch)
-

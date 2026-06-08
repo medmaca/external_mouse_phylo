@@ -54,9 +54,10 @@ end
 function deep_seq_GS(tree, start_VAFs, end_VAFs, muts, iter, burn_in, thin;
     scale_pm = 100, min_VAF = 10.0^-10)
     # Create the variables for tracking output of Gibbs sampler and other intermediates
-    curr_VAFs = Dict{LinkBranch, Dict{String, Float64}}()
-    br_starts = Dict{LinkBranch, Float64}()
-    br_ends = Dict{LinkBranch, Float64}()
+    BranchT = typeof(getinbound(tree, getleaves(tree)[1]))
+    curr_VAFs = Dict{BranchT, Dict{String, Float64}}()
+    br_starts = Dict{BranchT, Float64}()
+    br_ends = Dict{BranchT, Float64}()
     
     # Set initial conditions - split values for internal nodes
     for i in traversal(tree, postorder)
@@ -285,7 +286,8 @@ Reads data from files produced by `write_GS_output()` and places them into `tree
 """
 function read_GS_output!(tree, mut_vafs_file, branch_vafs_file, start_VAF, end_VAF, muts)
     # Define a mapping for the nodes assigned in the VAF files to the branch names of tree
-    node_to_branch = Dict{Int64, LinkBranch}()
+    BranchT = typeof(getinbound(tree, getleaves(tree)[1]))
+    node_to_branch = Dict{Int64, BranchT}()
     for i in 1:nleaves(tree)
         node_to_branch[i] = getinbound(tree, getleaves(tree)[i])
     end

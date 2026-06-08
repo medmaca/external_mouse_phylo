@@ -1,0 +1,6 @@
+[deps]
+CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Phylo = "aea672f4-3940-5932-aa44-993d1c3ff149"
+RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
