@@ -11,12 +11,12 @@
 # Note: this Dockerfile has not been built in the authoring environment. Confirm
 # the JULIA_VERSION below is a valid release and adjust if a build fails.
 
-FROM rocker/r-ver:4.4.1
+FROM rocker/r-ver:4.5.3
 
 # System tools needed to fetch Julia
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
+    ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # R package required to deserialise the input RDS (ape phylo objects).
@@ -24,10 +24,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN R -q -e "install.packages('ape', repos = 'https://cloud.r-project.org')"
 
 # Install a pinned Julia from the official tarball
-ARG JULIA_MAJMIN=1.11
-ARG JULIA_VERSION=1.11.3
+ARG JULIA_MAJMIN=1.12
+ARG JULIA_VERSION=1.12.6
 RUN curl -fsSL "https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_MAJMIN}/julia-${JULIA_VERSION}-linux-x86_64.tar.gz" \
-        | tar -xz -C /opt \
+    | tar -xz -C /opt \
     && ln -s "/opt/julia-${JULIA_VERSION}/bin/julia" /usr/local/bin/julia
 
 # RCall locates R via R_HOME; rocker installs R under /usr/local/lib/R.
@@ -44,7 +44,7 @@ COPY bin/ ./bin/
 RUN julia --project=/opt/deep_seq_gibbs /opt/deep_seq_gibbs/env/install.jl
 
 # Make the depot and project readable by any user (HPC jobs may not run as root).
-RUN chmod -R a+rX /opt/julia_depot /opt/deep_seq_gibbs
+RUN chmod -R a+rX /opt/julia_depot /opt/deep_seq_gibbs2026-06-08 16:02:47
 
 # Sanity check that the toolchain loads. This does not run the sampler.
 RUN julia --project=/opt/deep_seq_gibbs -e \

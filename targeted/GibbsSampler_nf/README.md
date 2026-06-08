@@ -67,7 +67,7 @@ Build locally with Docker and push to Docker Hub. Apptainer pulls and converts
 it on the cluster.
 
 ```bash
-docker build -t mcare/deep-seq-gibbs:0.1.0 .
+docker build -f Docker/Dockerfile -t mcare/deep-seq-gibbs:0.1.0 .
 docker push mcare/deep-seq-gibbs:0.1.0
 ```
 
