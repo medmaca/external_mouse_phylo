@@ -1,0 +1,3 @@
+sample_id,gibbs_info_rds
+MD7817z,/absolute/path/to/data/MD7817z_gibbs_info.RDS
+sampleB,/absolute/path/to/data/sampleB_gibbs_info.RDS
