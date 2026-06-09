@@ -23,17 +23,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Add further R packages here if a particular RDS needs them to load.
 RUN R -q -e "install.packages('ape', repos = 'https://cloud.r-project.org')"
 
-# Install a pinned Julia from the official tarball
-ARG JULIA_MAJMIN=1.12
-ARG JULIA_VERSION=1.12.6
+# Install a pinned Julia from the official tarball.
+# NOTE: RCall's REPL integration (RPrompt.jl) is incompatible with Julia 1.12's
+# revised REPL.LineEdit.Prompt API. Pin to 1.11.x until RCall is updated.
+ARG JULIA_MAJMIN=1.11
+ARG JULIA_VERSION=1.11.3
 RUN curl -fsSL "https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_MAJMIN}/julia-${JULIA_VERSION}-linux-x86_64.tar.gz" \
     | tar -xz -C /opt \
     && ln -s "/opt/julia-${JULIA_VERSION}/bin/julia" /usr/local/bin/julia
 
 # RCall locates R via R_HOME; rocker installs R under /usr/local/lib/R.
 ENV R_HOME=/usr/local/lib/R
+# Pkg.build("RCall") links against libR.so at build time; expose it on the linker path.
+ENV LD_LIBRARY_PATH=/usr/local/lib/R/lib
 # Keep the Julia depot inside the image so a read-only container needs no writable home.
 ENV JULIA_DEPOT_PATH=/opt/julia_depot
+# Always activate the project so packages are found regardless of working directory.
+ENV JULIA_PROJECT=/opt/deep_seq_gibbs
+# Disable RCall's R sub-REPL injection: it crashes on `using RCall` in an
+# interactive Julia session due to a REPL.LineEdit.Prompt API mismatch in the
+# current RCall release. The pipeline only uses Julia non-interactively so
+# the R REPL mode is not needed.
+ENV RCALL_REPL_INIT=false
 
 WORKDIR /opt/deep_seq_gibbs
 COPY env/ ./env/
@@ -44,10 +55,15 @@ COPY bin/ ./bin/
 RUN julia --project=/opt/deep_seq_gibbs /opt/deep_seq_gibbs/env/install.jl
 
 # Make the depot and project readable by any user (HPC jobs may not run as root).
-RUN chmod -R a+rX /opt/julia_depot /opt/deep_seq_gibbs2026-06-08 16:02:47
+RUN chmod -R a+rX /opt/julia_depot /opt/deep_seq_gibbs
 
 # Sanity check that the toolchain loads. This does not run the sampler.
 RUN julia --project=/opt/deep_seq_gibbs -e \
     'using Phylo, RCall, DataFrames, Distributions, CodecZlib, ArgParse; println("env OK")'
 
-CMD ["bash"]
+# rocker/r-ver sets ENTRYPOINT ["R"]; clear it so the CMD is run directly.
+#   docker run -it image           → interactive bash  (CMD default)
+#   docker run image julia -v      → julia -v          (CMD overridden)
+#   docker run image /script.sh    → /script.sh        (Nextflow usage)
+ENTRYPOINT []
+CMD ["/bin/bash"]
