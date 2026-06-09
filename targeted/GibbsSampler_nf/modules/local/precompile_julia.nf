@@ -14,20 +14,18 @@ process PRECOMPILE_JULIA {
 
     container "${params.container}"
 
-    // Store the sentinel alongside the depot so it persists across runs.
-    storeDir "${params.julia_depot ?: (params.outdir + '/.julia_depot')}/.nf_cache"
-
+    // The depot directory is the output. Nextflow stages it (by default a
+    // symlink) into each downstream task's work directory, so every RUN_GIBBS
+    // task sees the same pre-populated cache without re-running this process.
     output:
-    path "precompile.done"
+    path ".julia_depot", type: 'dir'
 
     script:
-    def julia_depot = params.julia_depot ?: "${params.outdir}/.julia_depot"
     """
-    export JULIA_DEPOT_PATH="${julia_depot}:/opt/julia_depot"
+    mkdir -p .julia_depot
+    export JULIA_DEPOT_PATH="\${PWD}/.julia_depot:/opt/julia_depot"
 
     julia --project=/opt/deep_seq_gibbs -e \\
         'using Pkg; Pkg.precompile(); println("Julia precompilation complete")'
-
-    echo "\$(date -u)" > precompile.done
     """
 }

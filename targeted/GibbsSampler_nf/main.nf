@@ -23,8 +23,8 @@ workflow {
         error "Please provide --sample_sheet (a CSV with columns: sample_id, gibbs_info_rds)"
     }
 
-    // Build the shared Julia depot once. storeDir means this is skipped on
-    // re-runs if the sentinel already exists.
+    // Build the shared Julia depot once. Nextflow stages the output directory
+    // into each RUN_GIBBS work dir so every task reuses the compiled caches.
     PRECOMPILE_JULIA()
 
     Channel
@@ -36,9 +36,9 @@ workflow {
             }
             tuple(row.sample_id.trim(), file(row.gibbs_info_rds.trim(), checkIfExists: true))
         }
-        // Gate every sample on precompilation finishing so no RUN_GIBBS task
-        // starts before the shared depot is ready.
-        .combine(PRECOMPILE_JULIA.out)
-        .map { sample_id, gibbs_info_rds, _done -> tuple(sample_id, gibbs_info_rds) }
-        | RUN_GIBBS
+        .set { samples }
+
+    // .first() converts the single depot emission to a value channel so it
+    // can be broadcast to all RUN_GIBBS tasks rather than consumed once.
+    RUN_GIBBS(samples, PRECOMPILE_JULIA.out)
 }

@@ -21,6 +21,7 @@ process RUN_GIBBS {
 
     input:
     tuple val(sample_id), path(gibbs_info_rds)
+    path julia_depot
 
     output:
     tuple val(sample_id),
@@ -29,12 +30,13 @@ process RUN_GIBBS {
     path "versions.txt", emit: versions
 
     script:
-    def julia_depot = params.julia_depot ?: "${params.outdir}/.julia_depot"
     """
-    # Point Julia at the shared pre-populated depot first so the compiled package
-    # caches built by PRECOMPILE_JULIA are found immediately, then fall back to
-    # the baked-in depot inside the container image.
-    export JULIA_DEPOT_PATH="${julia_depot}:/opt/julia_depot"
+    # julia_depot is Nextflow-staged (symlinked) into the work directory from
+    # PRECOMPILE_JULIA's output, so the pre-compiled caches are immediately
+    # available. A task-local writable depot comes first so any incidental
+    # writes by Julia don't race with other tasks through the shared symlink.
+    mkdir -p .julia_depot_rw
+    export JULIA_DEPOT_PATH="\${PWD}/.julia_depot_rw:\${PWD}/${julia_depot}:/opt/julia_depot"
 
     julia --project=/opt/deep_seq_gibbs /opt/deep_seq_gibbs/bin/run_gibbs.jl \\
         --input ${gibbs_info_rds} \\
