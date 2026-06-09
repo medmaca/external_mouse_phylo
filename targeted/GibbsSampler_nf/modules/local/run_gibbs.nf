@@ -29,10 +29,12 @@ process RUN_GIBBS {
     path "versions.txt", emit: versions
 
     script:
+    def julia_depot = params.julia_depot ?: "${params.outdir}/.julia_depot"
     """
-    # Prefer a writable depot in the task directory, falling back to the baked-in
-    # depot, so a read-only Apptainer container never needs a writable home.
-    export JULIA_DEPOT_PATH="\${PWD}/.julia_depot:/opt/julia_depot"
+    # Point Julia at the shared pre-populated depot first so the compiled package
+    # caches built by PRECOMPILE_JULIA are found immediately, then fall back to
+    # the baked-in depot inside the container image.
+    export JULIA_DEPOT_PATH="${julia_depot}:/opt/julia_depot"
 
     julia --project=/opt/deep_seq_gibbs /opt/deep_seq_gibbs/bin/run_gibbs.jl \\
         --input ${gibbs_info_rds} \\

@@ -15,12 +15,17 @@
 
 nextflow.enable.dsl = 2
 
-include { RUN_GIBBS } from './modules/local/run_gibbs.nf'
+include { PRECOMPILE_JULIA } from './modules/local/precompile_julia.nf'
+include { RUN_GIBBS }        from './modules/local/run_gibbs.nf'
 
 workflow {
     if (params.sample_sheet == null) {
         error "Please provide --sample_sheet (a CSV with columns: sample_id, gibbs_info_rds)"
     }
+
+    // Build the shared Julia depot once. storeDir means this is skipped on
+    // re-runs if the sentinel already exists.
+    PRECOMPILE_JULIA()
 
     Channel
         .fromPath(params.sample_sheet, checkIfExists: true)
@@ -31,7 +36,9 @@ workflow {
             }
             tuple(row.sample_id.trim(), file(row.gibbs_info_rds.trim(), checkIfExists: true))
         }
-        .set { samples }
-
-    RUN_GIBBS(samples)
+        // Gate every sample on precompilation finishing so no RUN_GIBBS task
+        // starts before the shared depot is ready.
+        .combine(PRECOMPILE_JULIA.out)
+        .map { sample_id, gibbs_info_rds, _done -> tuple(sample_id, gibbs_info_rds) }
+        | RUN_GIBBS
 }
