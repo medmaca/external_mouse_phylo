@@ -4,19 +4,18 @@ This repository holds the code, intermediate data and outputs for a study that r
 
 It is a fork of the upstream repository `mspencerchapman/mouse_phylo`. The fork adds a working, parameterised and containerised version of the Gibbs sampler (`targeted/GibbsSampler_nf/`), compatibility fixes to the original sampler (`targeted/GibbsSampler/`), and a sample-pooling utility (`mcare_scripts/pooling/`). Almost every R script depends on a companion library of R functions, [external_my_functions](https://github.com/medmaca/external_my_functions), which must be cloned alongside this repository.
 
-> [!IMPORTANT]
-> **Read the known issues before reusing results**
-> Several defects were found while this document was being written, including one that probably biases the Gibbs sampler VAF estimates and three pooled sampler inputs that contain no reads at all. They are listed, with file and line references, in [Known issues and caveats](#known-issues-and-caveats). Where an issue concerns the intent of the original analysis it should be confirmed with the code's author before anything is changed.
+> [!important] Read the known issues before reusing results
+> Several defects were found while this document was being written, including one that probably biases the Gibbs sampler VAF estimates and three pooled sampler inputs that contain no reads at all. They are listed, with file and line references, in [Known issues and caveats](#Known%20issues%20and%20caveats). Where an issue concerns the intent of the original analysis it should be confirmed with the code's author before anything is changed.
 
 ## Contents at a glance
 
 | Area | What it is | Main entry points |
 | --- | --- | --- |
-| Whole-genome sequencing (WGS) phylogeny | Somatic mutations called in single-cell-derived colonies, filtered, and used to build one tree per mouse | [bash_analysis/bash_analysis_for_mouse_phylo.sh](bash_analysis/bash_analysis_for_mouse_phylo.sh), [annotated_muts/](annotated_muts), [tree_files/](tree_files) |
-| Tree analysis notebooks | Tree plotting, anatomical clustering tests, clonality modelling, bait-set design | [Mouse_phylo_initial.Rmd](Mouse_phylo_initial.Rmd), [Mouse_phylo_clustering.Rmd](Mouse_phylo_clustering.Rmd) |
-| Targeted sequencing | Deep sequencing of branch-defining mutations in blood, sorted cells and tissues | [targeted/Targeted_sequencing_data_MOUSE.sh](targeted/Targeted_sequencing_data_MOUSE.sh), [targeted/Getting_files_ready_for_GibbsSampler.R](targeted/Getting_files_ready_for_GibbsSampler.R), [targeted/Targeted_sequencing_analysis.R](targeted/Targeted_sequencing_analysis.R) |
-| Gibbs sampler | Bayesian estimation of the VAF of every tree branch in each targeted sample | [targeted/GibbsSampler/](targeted/GibbsSampler) (original), [targeted/GibbsSampler_nf/](targeted/GibbsSampler_nf) (Nextflow and container) |
-| Pooling | Summing read counts across samples from the same mouse to raise depth | [mcare_scripts/pooling/](mcare_scripts/pooling) |
+| Whole-genome sequencing (WGS) phylogeny | Somatic mutations called in single-cell-derived colonies, filtered, and used to build one tree per mouse | `bash_analysis/bash_analysis_for_mouse_phylo.sh`, `annotated_muts`, `tree_files` |
+| Tree analysis notebooks | Tree plotting, anatomical clustering tests, clonality modelling, bait-set design | `Mouse_phylo_initial.Rmd`, `Mouse_phylo_clustering.Rmd` |
+| Targeted sequencing | Deep sequencing of branch-defining mutations in blood, sorted cells and tissues | `targeted/Targeted_sequencing_data_MOUSE.sh`, `targeted/Getting_files_ready_for_GibbsSampler.R`, `targeted/Targeted_sequencing_analysis.R` |
+| Gibbs sampler | Bayesian estimation of the VAF of every tree branch in each targeted sample | `targeted/GibbsSampler` (original), `targeted/GibbsSampler_nf` (Nextflow and container) |
+| Pooling | Summing read counts across samples from the same mouse to raise depth | `mcare_scripts/pooling` |
 
 ## The study in brief
 
@@ -237,9 +236,8 @@ The functions this project actually calls from `external_my_functions` are:
 | Julia 1.11 with `Phylo`, `RCall`, `DataFrames`, `Distributions`, `CodecZlib`, `ArgParse` | Gibbs sampler | easiest via the container, see below |
 | Nextflow and Apptainer (or Docker) | `GibbsSampler_nf` | container image `docker://mcare/deep-seq-gibbs:0.1.0` |
 
-> [!WARNING]
-> **Sourcing the whole function library needs more packages than the scripts load**
-> The notebooks source every file in `external_my_functions`. Some of those files call `library(devtools)`, `library(MCMCglmm)`, `library(phangorn)`, `library(spam)` and `require(VGAM)` when they are sourced, so these packages must be installed even though no notebook lists them. See K13 in [Known issues and caveats](#known-issues-and-caveats).
+> [!warning] Sourcing the whole function library needs more packages than the scripts load
+> The notebooks source every file in `external_my_functions`. Some of those files call `library(devtools)`, `library(MCMCglmm)`, `library(phangorn)`, `library(spam)` and `require(VGAM)` when they are sourced, so these packages must be installed even though no notebook lists them. See K13 in [Known issues and caveats](#Known%20issues%20and%20caveats).
 
 ### Suggested directory layout
 
@@ -265,18 +263,18 @@ Every R script hardcodes the original author's paths, usually switching on wheth
 
 | File | Variable (line) | Set it to |
 | --- | --- | --- |
-| [Mouse_phylo_initial.Rmd](Mouse_phylo_initial.Rmd) | `my_working_dir` ([L10](Mouse_phylo_initial.Rmd#L10)) | `<work_root>/external_mouse_phylo/` (trailing slash required) |
-| | `gfile` ([L11](Mouse_phylo_initial.Rmd#L11)) | path to GRCm38 `genome.fa` |
-| | function folder ([L20](Mouse_phylo_initial.Rmd#L20)) | `<work_root>/external_my_functions/` |
-| | `sample_ID` ([L137](Mouse_phylo_initial.Rmd#L137)) | `"MD7634"` or `"MD7635"`; the notebook analyses one mouse per run |
-| [Mouse_phylo_clustering.Rmd](Mouse_phylo_clustering.Rmd) | `my_working_dir`, `gfile`, function folder ([L11](Mouse_phylo_clustering.Rmd#L11), [L12](Mouse_phylo_clustering.Rmd#L12), [L22](Mouse_phylo_clustering.Rmd#L22)) | as above |
-| | `sample_ID` ([L151](Mouse_phylo_clustering.Rmd#L151)) | `"MD7634"` or `"MD7635"` |
-| [Sample_summaries.R](Sample_summaries.R) | `root_dir` ([L18](Sample_summaries.R#L18), [L51](Sample_summaries.R#L51)) | `<work_root>/external_mouse_phylo/` |
-| [targeted/Getting_files_ready_for_GibbsSampler.R](targeted/Getting_files_ready_for_GibbsSampler.R) | `my_working_directory`, `R_functions_dir`, `tree_mut_dir` ([L17-L20](targeted/Getting_files_ready_for_GibbsSampler.R#L17-L20)); `root_dir` ([L113](targeted/Getting_files_ready_for_GibbsSampler.R#L113)) | repository root, function library, `treemut` folder, `targeted/` folder |
-| | tree and mutation folders ([L139-L145](targeted/Getting_files_ready_for_GibbsSampler.R#L139-L145)) | on non-Mac systems these point at `filtering_runs/...`; use the repository's `tree_files/` and `annotated_muts/` instead |
-| [targeted/Targeted_sequencing_analysis.R](targeted/Targeted_sequencing_analysis.R) | same variables ([L10-L12](targeted/Targeted_sequencing_analysis.R#L10-L12), [L550](targeted/Targeted_sequencing_analysis.R#L550), [L576-L582](targeted/Targeted_sequencing_analysis.R#L576-L582)) | as above |
-| [targeted/GibbsSampler/wrap_gibbs.jl](targeted/GibbsSampler/wrap_gibbs.jl) | `git_dir` ([L12](targeted/GibbsSampler/wrap_gibbs.jl#L12)), `out_dir` ([L13](targeted/GibbsSampler/wrap_gibbs.jl#L13)) | the `targeted/GibbsSampler` folder, and an output folder |
-| [targeted/GibbsSampler_nf/nextflow.config](targeted/GibbsSampler_nf/nextflow.config) | `hpc_account` ([L27](targeted/GibbsSampler_nf/nextflow.config#L27)) | your SLURM account |
+| `Mouse_phylo_initial.Rmd` | `my_working_dir` (line 10) | `<work_root>/external_mouse_phylo/` (trailing slash required) |
+| | `gfile` (line 11) | path to GRCm38 `genome.fa` |
+| | function folder (line 20) | `<work_root>/external_my_functions/` |
+| | `sample_ID` (line 137) | `"MD7634"` or `"MD7635"`; the notebook analyses one mouse per run |
+| `Mouse_phylo_clustering.Rmd` | `my_working_dir`, `gfile`, function folder (line 11, line 12, line 22) | as above |
+| | `sample_ID` (line 151) | `"MD7634"` or `"MD7635"` |
+| `Sample_summaries.R` | `root_dir` (line 18, line 51) | `<work_root>/external_mouse_phylo/` |
+| `targeted/Getting_files_ready_for_GibbsSampler.R` | `my_working_directory`, `R_functions_dir`, `tree_mut_dir` (lines 17-20); `root_dir` (line 113) | repository root, function library, `treemut` folder, `targeted/` folder |
+| | tree and mutation folders (lines 139-145) | on non-Mac systems these point at `filtering_runs/...`; use the repository's `tree_files/` and `annotated_muts/` instead |
+| `targeted/Targeted_sequencing_analysis.R` | same variables (lines 10-12, line 550, lines 576-582) | as above |
+| `targeted/GibbsSampler/wrap_gibbs.jl` | `git_dir` (line 12), `out_dir` (line 13) | the `targeted/GibbsSampler` folder, and an output folder |
+| `targeted/GibbsSampler_nf/nextflow.config` | `hpc_account` (line 27) | your SLURM account |
 
 Relative paths used inside the notebooks (for example `annotated_muts/...`) resolve against `my_working_dir`, which the setup chunk sets as the knitr root directory.
 
@@ -290,7 +288,7 @@ The R analyses are light and can run on a login or interactive node. The Gibbs s
 4. Edit `hpc_account` and, if needed, the `viking2` profile in `nextflow.config` for your scheduler, or add your own profile.
 5. Run the pipeline from a scratch working directory. Nextflow writes its `work/` directory where it is launched, so launch it from scratch space rather than from inside the repository.
 
-See [Running the Gibbs sampler](#running-the-gibbs-sampler) for the commands.
+See [Running the Gibbs sampler](#Running%20the%20Gibbs%20sampler) for the commands.
 
 ## Top-level scripts and notebooks
 
@@ -331,14 +329,14 @@ Authorship below is taken from the git history, using GitHub account names.
 | `mutlist2` | `eval=FALSE`. Adds per-mutation pooled counts and flags shared mutations and mutations from the 15 selected colonies per mouse (`selected_tips.csv`); the code that wrote `mouse_phylo_reduced_muts.csv` is commented out. |
 | `baitset_check` | Intersects mutations with the final probe BED, writes `baitset_SNVs.bed` and `baitset_INDELs.bed`, and plots each tree with branches split by the proportion of mutations covered, both full and cut at 15 mutations. |
 
-**How to run:** set the paths and `sample_ID` (see [Paths to edit before running](#paths-to-edit-before-running)), then knit in RStudio or run `rmarkdown::render("Mouse_phylo_initial.Rmd")`. Run once per mouse. Fix K3 first or the render stops at `private_branch_correction`.
+**How to run:** set the paths and `sample_ID` (see [Paths to edit before running](#Paths%20to%20edit%20before%20running)), then knit in RStudio or run `rmarkdown::render("Mouse_phylo_initial.Rmd")`. Run once per mouse. Fix K3 first or the render stops at `private_branch_correction`.
 
 ### Mouse_phylo_clustering.Rmd
 
 **Author:** `mspencerchapman`.
 **Purpose:** tests at which point in molecular time colonies from the same bone start to cluster together.
 
-**Inputs:** as for the initial notebook (one mouse per run, `sample_ID` at [L151](Mouse_phylo_clustering.Rmd#L151)).
+**Inputs:** as for the initial notebook (one mouse per run, `sample_ID` at line 151).
 
 **Outputs:** `plots/<ID>_chisq_by_moltime_plot.pdf` (3 by 2 inches).
 
@@ -348,7 +346,7 @@ Authorship below is taken from the git history, using GitHub account names.
 2. For every molecular-time cut-off from 1 to 60 mutations it finds the clades whose branch crosses the cut-off (`get_expanded_clade_nodes`), keeps clades with more than one colony, tabulates the bones of their colonies into a clade-by-bone matrix, and runs `chisq.test` against the overall bone proportions.
 3. Plots the p-value against cut-off, with p < 0.05 highlighted.
 
-**How to run:** as for the initial notebook. `get_expanded_clade_nodes` is not defined by the notebook or the function library (K11); copy its definition from [targeted/Getting_files_ready_for_GibbsSampler.R](targeted/Getting_files_ready_for_GibbsSampler.R#L79-L89) into the setup chunk first.
+**How to run:** as for the initial notebook. `get_expanded_clade_nodes` is not defined by the notebook or the function library (K11); copy its definition from `targeted/Getting_files_ready_for_GibbsSampler.R` (lines 79-89) into the setup chunk first.
 
 ### Mouse_phylo_analysis.R
 
@@ -496,8 +494,7 @@ flowchart LR
 
 The scripts derive three fields from `SUPPLIER_SAMPLE_ID` by splitting on `_`: `flow_marker` (field 1), `age` (field 3, only meaningful for blood) and, from the internal name, `PDID` (first six characters, the targeted mouse ID).
 
-> [!CAUTION]
-> **Personal data**
+> [!caution] Personal data
 > Three of the manifests contain populated collaborator name, email address and postal address columns. Keep the repositories private and do not copy these files into anything public.
 
 ### canapps_info
@@ -639,7 +636,7 @@ In both count matrices "depth" (`DEP`, `NR`, `Good_depth`) is the **total** numb
 4. For each mouse computes the control columns: `mtr_other` and `depth_other` are the variant reads and total depth at each of this mouse's mutations, summed over every targeted sample of the **other** mouse. Because the two mice share essentially no somatic mutations, these reads measure sequencing and mapping noise at each site.
 5. For each sample writes `list(details = ..., tree = ...)` where `details` has `Chrom`, `Pos`, `Ref`, `Alt`, `node`, `mtr`, `depth`, `mtr_other`, `depth_other`.
 
-**How to run:** set the paths (see [Paths to edit before running](#paths-to-edit-before-running)), create `targeted/output/`, and source the script from R with the working directory at the repository root (the metadata path is relative).
+**How to run:** set the paths (see [Paths to edit before running](#Paths%20to%20edit%20before%20running)), create `targeted/output/`, and source the script from R with the working directory at the repository root (the metadata path is relative).
 
 ### Targeted_sequencing_analysis.R
 
@@ -848,7 +845,7 @@ Each run handles one sample and prints the iteration number every `thin` iterati
 
 ### targeted/GibbsSampler_nf (Nextflow pipeline)
 
-**Author:** `medmaca`. Runs the sampler once per row of a sample sheet, in parallel, inside a container. Full details are in [targeted/GibbsSampler_nf/README.md](targeted/GibbsSampler_nf/README.md).
+**Author:** `medmaca`. Runs the sampler once per row of a sample sheet, in parallel, inside a container. Full details are in `targeted/GibbsSampler_nf/README.md`.
 
 ```mermaid
 ---
@@ -913,7 +910,7 @@ docker run --rm -v <data_dir>:/in:ro -v <out_dir>:/out mcare/deep-seq-gibbs:0.1.
 | Reproduce the tree figures and clustering statistics | Set up the paths, fix K3 and K11, then knit both notebooks once per mouse. |
 | Rebuild the per-sample Gibbs inputs | Run `targeted/Getting_files_ready_for_GibbsSampler.R`; copy `targeted/output/*.RDS` into `targeted/GibbsSampler/data/` or point the sample sheet at them. |
 | Pool samples | Edit a copy of `mcare_scripts/pooling/example_pooling_groups.csv`, run `pool_gibbs_info.R`, and add the pooled files to the sample sheet. |
-| Run the sampler on many samples | Use `GibbsSampler_nf` as in [Running the Gibbs sampler](#running-the-gibbs-sampler). |
+| Run the sampler on many samples | Use `GibbsSampler_nf` as in [Running the Gibbs sampler](#Running%20the%20Gibbs%20sampler). |
 | Get cell fractions for a clade | Read `<sample>_branch_VAFs.txt.gz`, drop the first value of each list, take the `Top_VAF` draws for the node and multiply by 2 (autosomal clades); report the median and a credible interval from the draws. |
 | Compare two samples on the tree | Use `Gibbs_targ_seq_comparison_plots` from `Targeted_sequencing_analysis.R` after reading both posteriors (define `tree` first, see K10). |
 
@@ -925,28 +922,28 @@ Severity: **High** can change results or silently produce wrong output; **Medium
 
 | ID | Severity | Where | Issue | Impact and suggested action |
 | --- | --- | --- | --- | --- |
-| K1 | High | [targeted/GibbsSampler/wrap_gibbs.jl#L77-L83](targeted/GibbsSampler/wrap_gibbs.jl#L77-L83), [targeted/GibbsSampler_nf/bin/run_gibbs.jl#L144-L151](targeted/GibbsSampler_nf/bin/run_gibbs.jl#L144-L151), [targeted/GibbsSampler/src/Deep_seq_tree_GS.jl#L104-L105](targeted/GibbsSampler/src/Deep_seq_tree_GS.jl#L104-L105); inputs from [targeted/Getting_files_ready_for_GibbsSampler.R#L255-L258](targeted/Getting_files_ready_for_GibbsSampler.R#L255-L258) | The `depth` column holds the **total** depth (cgpVAF `DEP`; verified against the TSV header and the RDS values). Both drivers treat it as a count of reference reads (`obs_ref`) and set `obs_depth = mtr + depth`, and the likelihood is `Binomial(obs_depth, p)`. Variant reads are therefore counted twice. | Fitted VAFs are pulled towards v/(1 + v) instead of v: negligible at low VAF, but a true VAF of 0.25 is estimated near 0.20 and 0.5 near 0.33. This affects the early, high-VAF branches most, and every downstream cell fraction. The error rate has the same double count, with negligible effect. Confirm with the code's author whether the engine expected reference counts; if so, pass `depth - mtr` as `obs_ref` or set `obs_depth = depth`, and rerun. |
+| K1 | High | `targeted/GibbsSampler/wrap_gibbs.jl` (lines 77-83), `targeted/GibbsSampler_nf/bin/run_gibbs.jl` (lines 144-151), `targeted/GibbsSampler/src/Deep_seq_tree_GS.jl` (lines 104-105); inputs from `targeted/Getting_files_ready_for_GibbsSampler.R` (lines 255-258) | The `depth` column holds the **total** depth (cgpVAF `DEP`; verified against the TSV header and the RDS values). Both drivers treat it as a count of reference reads (`obs_ref`) and set `obs_depth = mtr + depth`, and the likelihood is `Binomial(obs_depth, p)`. Variant reads are therefore counted twice. | Fitted VAFs are pulled towards v/(1 + v) instead of v: negligible at low VAF, but a true VAF of 0.25 is estimated near 0.20 and 0.5 near 0.33. This affects the early, high-VAF branches most, and every downstream cell fraction. The error rate has the same double count, with negligible effect. Confirm with the code's author whether the engine expected reference counts; if so, pass `depth - mtr` as `obs_ref` or set `obs_depth = depth`, and rerun. |
 | K2 | High | `targeted/GibbsSampler/data/MD7634_Liver_gibbs_info.RDS`, `MD7635_ILC2_...`, `MD7635_ILC3_...` | These three author-pooled inputs have zero depth at every mutation: their patterns (`_Li_`, `ILC2_`, `ILC3_`) matched no samples of that mouse (sorted ILC subsets could not be obtained from the second mouse). | The sampler still runs on them, and its output then reflects only the constraints. Exclude them from sample sheets and from any comparison. |
-| K3 | High | [Mouse_phylo_initial.Rmd#L445](Mouse_phylo_initial.Rmd#L445) and [#L457](Mouse_phylo_initial.Rmd#L457) | `correction_method` is set to `"sample-specific"` but tested as `"sample_specific"`, so neither branch runs and the chunk stops with `object 'new_edge_length' not found` (reproduced). | The corrected mutation burdens, corrected ultrametric tree and second AMOVA cannot be produced as committed. Change either string so they match. |
-| K4 | High | [targeted/Targeted_sequencing_analysis.R#L967-L1155](targeted/Targeted_sequencing_analysis.R#L967-L1155) | The soft cosine similarity section uses `all.trees.cc.nodups`, `bulk_smry_all` and `individual_type`, which are never defined here; it was carried over from a transplant study, and it would also read or write `targeted/data/similarity_matrices.Rds`. | Does not run. It needs rewriting for these mice (tree per mouse, sample list per mouse, labels from `targeted_metadata.xlsx`) before cross-lineage comparisons can be made. |
-| K5 | Medium | [targeted/Targeted_sequencing_analysis.R#L291-L304](targeted/Targeted_sequencing_analysis.R#L291-L304), [#L870-L880](targeted/Targeted_sequencing_analysis.R#L870-L880), [#L399](targeted/Targeted_sequencing_analysis.R#L399) | Posterior VAFs are converted to cell fractions by multiplying every mutation by 2, including X and Y mutations, which in male mice should not be doubled. The column split and `get_sum_of_frac` assume exactly 100 draws. | X and Y cell fractions are overstated by a factor of 2. Runs with a different `iter`, `burn_in` or `thin` break the reader. Apply the factor per chromosome and derive the number of draws from the data. |
-| K6 | Medium | [targeted/Targeted_sequencing_analysis.R#L704-L714](targeted/Targeted_sequencing_analysis.R#L704-L714) against [targeted/Getting_files_ready_for_GibbsSampler.R#L255](targeted/Getting_files_ready_for_GibbsSampler.R#L255) | Author-pooled inputs contain SNVs only (4,130 and 4,284 rows); per-sample inputs and pools made with `pool_gibbs_info.R` contain SNVs and indels (4,629 and 4,812 rows). | Pooled and per-sample posteriors are based on different mutation sets. Keep the choice consistent within a comparison. |
+| K3 | High | `Mouse_phylo_initial.Rmd` (line 445) and line 457 | `correction_method` is set to `"sample-specific"` but tested as `"sample_specific"`, so neither branch runs and the chunk stops with `object 'new_edge_length' not found` (reproduced). | The corrected mutation burdens, corrected ultrametric tree and second AMOVA cannot be produced as committed. Change either string so they match. |
+| K4 | High | `targeted/Targeted_sequencing_analysis.R` (lines 967-1155) | The soft cosine similarity section uses `all.trees.cc.nodups`, `bulk_smry_all` and `individual_type`, which are never defined here; it was carried over from a transplant study, and it would also read or write `targeted/data/similarity_matrices.Rds`. | Does not run. It needs rewriting for these mice (tree per mouse, sample list per mouse, labels from `targeted_metadata.xlsx`) before cross-lineage comparisons can be made. |
+| K5 | Medium | `targeted/Targeted_sequencing_analysis.R` (lines 291-304), lines 870-880, line 399 | Posterior VAFs are converted to cell fractions by multiplying every mutation by 2, including X and Y mutations, which in male mice should not be doubled. The column split and `get_sum_of_frac` assume exactly 100 draws. | X and Y cell fractions are overstated by a factor of 2. Runs with a different `iter`, `burn_in` or `thin` break the reader. Apply the factor per chromosome and derive the number of draws from the data. |
+| K6 | Medium | `targeted/Targeted_sequencing_analysis.R` (lines 704-714) against `targeted/Getting_files_ready_for_GibbsSampler.R` (line 255) | Author-pooled inputs contain SNVs only (4,130 and 4,284 rows); per-sample inputs and pools made with `pool_gibbs_info.R` contain SNVs and indels (4,629 and 4,812 rows). | Pooled and per-sample posteriors are based on different mutation sets. Keep the choice consistent within a comparison. |
 | K7 | Medium | [external_my_functions: foetal.filters.parallel.R#L561-L567](https://github.com/medmaca/external_my_functions/blob/master/foetal.filters.parallel.R#L561-L567) | `MD7817q` (CD3e+ blood, 27 weeks, mouse 348) is in the SNV cgpVAF file but not the indel one, and `import_cgpvaf_SNV_and_INDEL` keeps only samples in both. | No per-sample input exists for it, and it is missing from the author's pooled T-cell input. Check whether its indel cgpVAF run failed and, if its SNV data are usable, build an SNV-only input for it. |
 | K8 | Medium | [external_my_functions: targeted_analysis_functions.R#L168-L190](https://github.com/medmaca/external_my_functions/blob/master/targeted_analysis_functions.R#L168-L190) | `get_node_cell_frac` reads `matrices$mtr` and `matrices$dep`, but callers here pass lists with `NV` and `NR`. Indexing a missing element returns `NULL`, whose sum is 0, so the function silently returns `NA` (reproduced). | The node cell-fraction labels in `generate_targ_seq_plots` never appear. Either rename the list elements before calling, or change the function to use `NV`/`NR`. |
-| K9 | Medium | [targeted/Targeted_sequencing_analysis.R#L506](targeted/Targeted_sequencing_analysis.R#L506) and [#L103-L117](targeted/Targeted_sequencing_analysis.R#L103-L117) | `add_var_col` is redefined without the `matrices` argument, but `generate_targ_seq_plots` (defined earlier in the same file) still passes `matrices` positionally, so `matrices` is taken as the node. | The Bayesian classifier plots ([#L1222-L1248](targeted/Targeted_sequencing_analysis.R#L1222-L1248)) fail once the redefinition has run. Rename one of the two versions. |
-| K10 | Medium | [targeted/Targeted_sequencing_analysis.R](targeted/Targeted_sequencing_analysis.R) | Scratch-style script: the pooled-input section runs for one mouse only (`ID=Phylo_MDIDs[2]`, L679); the loop at L747 overwrites `ID`; `this_mouse_tissueIDs` is used at L854 before being defined at L863; L855 builds a `/targeted/targeted/` path; `olnames` at L285 is a typo; sampler outputs are read from `GibbsSampler/output/`, whereas the fork's sampler writes to `results/iter_.../`; `Gibbs_targ_seq_comparison_plots` plots a global `tree`. | Run section by section and adjust the objects and paths as you go. |
-| K11 | Medium | [Mouse_phylo_clustering.Rmd#L294](Mouse_phylo_clustering.Rmd#L294) | Calls `get_expanded_clade_nodes`, which neither the notebook nor the function library defines. | The notebook fails when knitted in a fresh session. Copy the definition from `targeted/Getting_files_ready_for_GibbsSampler.R` (L79-L89) into the setup chunk. |
-| K12 | Medium | [Mouse_phylo_analysis.R](Mouse_phylo_analysis.R) | Sources `Prolonged_persistence_functions.R` (not available); reads `filtering_runs/...` paths; labels samples `MD3764` (typo for `MD7634`); hardcodes the clonal clusters as `2:3` and the subclonal cluster as `1`; does not load `ape`. | Not runnable; superseded by `Mouse_phylo_initial.Rmd`. |
-| K13 | Medium | [Mouse_phylo_initial.Rmd#L20-L21](Mouse_phylo_initial.Rmd#L20-L21), [Mouse_phylo_clustering.Rmd#L22-L23](Mouse_phylo_clustering.Rmd#L22-L23), [targeted/Getting_files_ready_for_GibbsSampler.R#L21-L22](targeted/Getting_files_ready_for_GibbsSampler.R#L21-L22) | Every file in the function library is sourced with `pattern=".R"`. This loads packages that the notebooks do not list, and several function names are defined in more than one file, so the last file sourced wins. In particular `foetal.filters.R` (older signatures) is sourced after `foetal.filters.parallel.R` and overrides it in the notebooks; the targeted scripts avoid this by dropping the second file by position (`[-2]`), which depends on the sort order of the file list. | Install the extra packages; where a specific version of a function matters, source files explicitly rather than by pattern. |
-| K14 | Medium | [bash_analysis/bash_analysis_for_mouse_phylo.sh](bash_analysis/bash_analysis_for_mouse_phylo.sh) | Relies on Sanger modules and internal scripts not in any repository; `TREE_BUILDING_SCRIPT` is blank (L27); both tree-building calls use the same run ID (L234, L251); the run IDs (`MD7634_m40_postMS_reduced`) do not match the committed file names (`MD7634_postMS_reduced_a_j_vaf`); the `_post_mix` and `_post_dup` steps are not recorded. | The WGS stage cannot be rerun from this repository. Treat `annotated_muts/` and `tree_files/` as the starting point, and confirm the missing steps with the code's author if they are needed. |
-| K15 | Medium | [Mouse_phylo_initial.Rmd#L334-L343](Mouse_phylo_initial.Rmd#L334-L343), [#L416](Mouse_phylo_initial.Rmd#L416) | `subclonal_clusters` is only defined if a component lies below the clonal one; the per-mutation classification fixes the subclonal VAF at 0.33 rather than using the fitted value; the mixture is initialised by `kmeans`, so results depend on the seed. | Check the fitted components before relying on the clonal and subclonal split. |
-| K16 | Low | [Mouse_phylo_initial.Rmd#L594-L615](Mouse_phylo_initial.Rmd#L594-L615), [#L675-L683](Mouse_phylo_initial.Rmd#L675-L683) | `mutlist2` is `eval=FALSE`, and with `reselect_tips=T` it filters on `selected_tip` before that column exists; `baitset_check` works on the `all.muts` object from `mutlist1`. | Only matters if the bait design is redone. |
-| K17 | Low | [targeted/GibbsSampler/wrap_gibbs.jl#L9-L13](targeted/GibbsSampler/wrap_gibbs.jl#L9-L13) | The fork changed the seed from 28 to 42 and hardcodes an HPC home path in `git_dir`; results go to a folder relative to where the script is run. | Fork outputs will not match earlier runs draw for draw. Edit `git_dir` before use. |
-| K18 | Low | `targeted/GibbsSampler/Manifest.toml`, [targeted/GibbsSampler_nf/Docker/Dockerfile#L29-L30](targeted/GibbsSampler_nf/Docker/Dockerfile#L29-L30), [targeted/GibbsSampler_nf/env/install.jl](targeted/GibbsSampler_nf/env/install.jl) | The standalone environment was resolved with Julia 1.12.6, the container pins Julia 1.11.3 (RCall's REPL mode does not work with 1.12), and `install.jl` resolves package versions afresh at build time. | A rebuilt image may contain different package versions. Copy the `Manifest.toml` out of the current image and commit it if bit-for-bit rebuilds matter. |
-| K19 | Low | [targeted/GibbsSampler_nf/main.nf#L41-L42](targeted/GibbsSampler_nf/main.nf#L41-L42), [modules/local/precompile_julia.nf#L8-L9](targeted/GibbsSampler_nf/modules/local/precompile_julia.nf#L8-L9), [nextflow.config#L27](targeted/GibbsSampler_nf/nextflow.config#L27) | Comments mention `.first()` and `storeDir`, neither of which is used (the behaviour is correct without them); `hpc_account` defaults to one user's allocation. | Tidy the comments; set `hpc_account` for your own account. |
+| K9 | Medium | `targeted/Targeted_sequencing_analysis.R` (line 506) and lines 103-117 | `add_var_col` is redefined without the `matrices` argument, but `generate_targ_seq_plots` (defined earlier in the same file) still passes `matrices` positionally, so `matrices` is taken as the node. | The Bayesian classifier plots (lines 1222-1248) fail once the redefinition has run. Rename one of the two versions. |
+| K10 | Medium | `targeted/Targeted_sequencing_analysis.R` | Scratch-style script: the pooled-input section runs for one mouse only (`ID=Phylo_MDIDs[2]`, L679); the loop at L747 overwrites `ID`; `this_mouse_tissueIDs` is used at L854 before being defined at L863; L855 builds a `/targeted/targeted/` path; `olnames` at L285 is a typo; sampler outputs are read from `GibbsSampler/output/`, whereas the fork's sampler writes to `results/iter_.../`; `Gibbs_targ_seq_comparison_plots` plots a global `tree`. | Run section by section and adjust the objects and paths as you go. |
+| K11 | Medium | `Mouse_phylo_clustering.Rmd` (line 294) | Calls `get_expanded_clade_nodes`, which neither the notebook nor the function library defines. | The notebook fails when knitted in a fresh session. Copy the definition from `targeted/Getting_files_ready_for_GibbsSampler.R` (L79-L89) into the setup chunk. |
+| K12 | Medium | `Mouse_phylo_analysis.R` | Sources `Prolonged_persistence_functions.R` (not available); reads `filtering_runs/...` paths; labels samples `MD3764` (typo for `MD7634`); hardcodes the clonal clusters as `2:3` and the subclonal cluster as `1`; does not load `ape`. | Not runnable; superseded by `Mouse_phylo_initial.Rmd`. |
+| K13 | Medium | `Mouse_phylo_initial.Rmd` (lines 20-21), `Mouse_phylo_clustering.Rmd` (lines 22-23), `targeted/Getting_files_ready_for_GibbsSampler.R` (lines 21-22) | Every file in the function library is sourced with `pattern=".R"`. This loads packages that the notebooks do not list, and several function names are defined in more than one file, so the last file sourced wins. In particular `foetal.filters.R` (older signatures) is sourced after `foetal.filters.parallel.R` and overrides it in the notebooks; the targeted scripts avoid this by dropping the second file by position (`[-2]`), which depends on the sort order of the file list. | Install the extra packages; where a specific version of a function matters, source files explicitly rather than by pattern. |
+| K14 | Medium | `bash_analysis/bash_analysis_for_mouse_phylo.sh` | Relies on Sanger modules and internal scripts not in any repository; `TREE_BUILDING_SCRIPT` is blank (L27); both tree-building calls use the same run ID (L234, L251); the run IDs (`MD7634_m40_postMS_reduced`) do not match the committed file names (`MD7634_postMS_reduced_a_j_vaf`); the `_post_mix` and `_post_dup` steps are not recorded. | The WGS stage cannot be rerun from this repository. Treat `annotated_muts/` and `tree_files/` as the starting point, and confirm the missing steps with the code's author if they are needed. |
+| K15 | Medium | `Mouse_phylo_initial.Rmd` (lines 334-343), line 416 | `subclonal_clusters` is only defined if a component lies below the clonal one; the per-mutation classification fixes the subclonal VAF at 0.33 rather than using the fitted value; the mixture is initialised by `kmeans`, so results depend on the seed. | Check the fitted components before relying on the clonal and subclonal split. |
+| K16 | Low | `Mouse_phylo_initial.Rmd` (lines 594-615), lines 675-683 | `mutlist2` is `eval=FALSE`, and with `reselect_tips=T` it filters on `selected_tip` before that column exists; `baitset_check` works on the `all.muts` object from `mutlist1`. | Only matters if the bait design is redone. |
+| K17 | Low | `targeted/GibbsSampler/wrap_gibbs.jl` (lines 9-13) | The fork changed the seed from 28 to 42 and hardcodes an HPC home path in `git_dir`; results go to a folder relative to where the script is run. | Fork outputs will not match earlier runs draw for draw. Edit `git_dir` before use. |
+| K18 | Low | `targeted/GibbsSampler/Manifest.toml`, `targeted/GibbsSampler_nf/Docker/Dockerfile` (lines 29-30), `targeted/GibbsSampler_nf/env/install.jl` | The standalone environment was resolved with Julia 1.12.6, the container pins Julia 1.11.3 (RCall's REPL mode does not work with 1.12), and `install.jl` resolves package versions afresh at build time. | A rebuilt image may contain different package versions. Copy the `Manifest.toml` out of the current image and commit it if bit-for-bit rebuilds matter. |
+| K19 | Low | `targeted/GibbsSampler_nf/main.nf` (lines 41-42), modules/local/precompile_julia.nf#L8-L9 (`targeted/GibbsSampler_nf/modules/local/precompile_julia.nf`) (lines 8-9), nextflow.config#L27 (`targeted/GibbsSampler_nf/nextflow.config`) (line 27) | Comments mention `.first()` and `storeDir`, neither of which is used (the behaviour is correct without them); `hpc_account` defaults to one user's allocation. | Tidy the comments; set `hpc_account` for your own account. |
 | K20 | Low | branch output files | Each branch posterior list starts with the initialisation value, so it has one more value than the mutation lists. | Drop the first value when parsing. |
-| K21 | Low | [targeted/Targeted_sequencing_data_MOUSE.sh#L81](targeted/Targeted_sequencing_data_MOUSE.sh#L81), [#L216-L222](targeted/Targeted_sequencing_data_MOUSE.sh#L216-L222) | `samples.txt` is overwritten by the metrics step; the file ends with R code; it calls helper scripts that are not in the repository. | Command log only. |
-| K22 | Low | [Sample_summaries.R#L18](Sample_summaries.R#L18), [#L79](Sample_summaries.R#L79) | Uses a different root folder name from the notebooks and calls `View()`. | Run interactively after setting `root_dir`. |
+| K21 | Low | `targeted/Targeted_sequencing_data_MOUSE.sh` (line 81), lines 216-222 | `samples.txt` is overwritten by the metrics step; the file ends with R code; it calls helper scripts that are not in the repository. | Command log only. |
+| K22 | Low | `Sample_summaries.R` (line 18), line 79 | Uses a different root folder name from the notebooks and calls `View()`. | Run interactively after setting `root_dir`. |
 | K23 | Low | `full_cgpvaf_matrices.RDS` | `import_cgpvaf_output` removes reference columns matching `PDv37is` (human) by default, so the mouse in silico normal `MDGRCm38is` stays in as if it were a sample (114 columns). | Harmless in the current code, which selects samples by prefix; exclude `MDGRCm38is` explicitly in new code. |
 | K24 | Low | `Mouse_phylo_MD7634.html`, `Mouse_phylo_MD7635.html` | Rendered from an older version of `Mouse_phylo_initial.Rmd` (no clonality or burden sections). | Re-knit to get current output. |
 | K25 | Low | repository root | `.gitignore` is an unrelated Dynamics 365 template; `.DS_Store` files, an Excel lock file (`sample_metadata/~$...`) and `targeted/GibbsSampler_nf/Docker/build.log` are committed; the bait BED files are duplicated in `targeted/`. | Housekeeping. |
